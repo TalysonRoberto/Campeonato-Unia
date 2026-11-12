@@ -1,0 +1,57 @@
+properties:
+  status:
+    displayName: Status
+  area:
+    displayName: Área
+  tipo:
+    displayName: Tipo
+  tokens:
+    displayName: Custo
+  atualizado:
+    displayName: Atualizado
+  prioridade:
+    displayName: Prioridade
+  esforco:
+    displayName: Esforço
+  situacao:
+    displayName: Situação
+views:
+  - type: table
+    name: "🔴 Revisar (desatualizadas)"
+    filters:
+      and:
+        - 'status == "desatualizado"'
+    order:
+      - file.name
+      - area
+      - atualizado
+  - type: table
+    name: "💸 Dívidas abertas"
+    filters:
+      and:
+        - 'tipo == "divida"'
+        - 'situacao != "resolvida"'
+    order:
+      - prioridade
+      - esforco
+      - file.name
+  - type: table
+    name: "📚 Aprendizados"
+    filters:
+      and:
+        - 'tipo == "aprendizado"'
+    order:
+      - atualizado
+      - file.name
+  - type: table
+    name: "🗺️ Tudo por área"
+    filters:
+      and:
+        - 'tipo != "template"'
+        - 'tipo != "meta"'
+        - 'status != "arquivado"'
+    order:
+      - area
+      - tipo
+      - tokens
+      - file.name
