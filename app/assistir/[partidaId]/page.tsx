@@ -6,21 +6,69 @@ import { carregarDados } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
-function extrairVideoId(url: string): string | null {
+type StreamingInfo =
+  | { plataforma: 'youtube'; id: string; tipo: 'video' | 'live' }
+  | { plataforma: 'twitch'; id: string; tipo: 'channel' | 'video' };
+
+function detectarStreaming(url: string): StreamingInfo | null {
   if (!url) return null;
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
+
+  // YouTube
+  const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/)
+    || url.match(/youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/);
+  if (youtubeMatch) {
+    return { plataforma: 'youtube', id: youtubeMatch[1], tipo: 'video' };
   }
+
+  // Twitch
+  const twitchChannelMatch = url.match(/(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]{4,25})(?:\/)?$/);
+  if (twitchChannelMatch) {
+    return { plataforma: 'twitch', id: twitchChannelMatch[1], tipo: 'channel' };
+  }
+
+  const twitchVideoMatch = url.match(/(?:https?:\/\/)?(?:www\.)?twitch\.tv\/videos\/(\d+)/);
+  if (twitchVideoMatch) {
+    return { plataforma: 'twitch', id: twitchVideoMatch[1], tipo: 'video' };
+  }
+
   return null;
 }
 
 function getTimePorId(id: string, times: any[]) {
   return times.find(t => t.id === id) || { nome: 'Time não encontrado', logo: '/img/logo.png', cor: '#ffffff' };
+}
+
+function buildVideoUrl(info: StreamingInfo, embedDomain: string): string {
+  if (info.plataforma === 'youtube') {
+    return `https://www.youtube.com/embed/${info.id}`;
+  }
+
+  if (info.plataforma === 'twitch') {
+    const params = new URLSearchParams();
+    if (info.tipo === 'channel') {
+      params.set('channel', info.id);
+    } else {
+      params.set('video', `v${info.id}`);
+    }
+    params.set('parent', embedDomain);
+    params.set('autoplay', 'true');
+    params.set('muted', 'false');
+    return `https://player.twitch.tv/?${params.toString()}`;
+  }
+
+  return '';
+}
+
+function buildChatUrl(info: StreamingInfo, embedDomain: string): string | null {
+  if (info.plataforma === 'youtube') {
+    return `https://www.youtube.com/live_chat?v=${info.id}&embed_domain=${embedDomain}`;
+  }
+
+  if (info.plataforma === 'twitch' && info.tipo === 'channel') {
+    return `https://www.twitch.tv/embed/${info.id}/chat?parent=${embedDomain}&darkpopout`;
+  }
+
+  return null;
 }
 
 interface PageProps {
@@ -36,8 +84,8 @@ export default async function AssistirPage({ params }: PageProps) {
     notFound();
   }
 
-  const videoId = extrairVideoId(partida.transmissao);
-  if (!videoId) {
+  const streaming = detectarStreaming(partida.transmissao);
+  if (!streaming) {
     notFound();
   }
 
@@ -46,7 +94,8 @@ export default async function AssistirPage({ params }: PageProps) {
 
   const headersList = await headers();
   const host = headersList.get('host') || 'localhost:3000';
-  const embedDomain = host.includes('localhost') ? 'localhost' : host;
+  // Twitch exige o parent sem porta; YouTube aceita com ou sem
+  const embedDomain = host.includes('localhost') ? 'localhost' : host.replace(/:\d+$/, '');
 
   const statusLabel = partida.status === 'ao_vivo' ? 'AO VIVO' : partida.status === 'finalizada' ? 'FINALIZADA' : 'AGENDADA';
   const statusClass = partida.status === 'ao_vivo'
@@ -60,6 +109,7 @@ export default async function AssistirPage({ params }: PageProps) {
     : 'A definir';
 
   const isAoVivo = partida.status === 'ao_vivo';
+  const mostrarChat = isAoVivo && streaming.plataforma !== 'twitch' || (isAoVivo && streaming.plataforma === 'twitch' && streaming.tipo === 'channel');
 
   // Resultado quando finalizada
   let resultadoTexto = '';
@@ -76,6 +126,9 @@ export default async function AssistirPage({ params }: PageProps) {
       resultadoClasse = 'text-valorant-red';
     }
   }
+
+  const videoUrl = buildVideoUrl(streaming, embedDomain);
+  const chatUrl = buildChatUrl(streaming, embedDomain);
 
   return (
     <main className="relative h-screen flex flex-col bg-valorant-dark text-white overflow-hidden">
@@ -94,9 +147,14 @@ export default async function AssistirPage({ params }: PageProps) {
               CAMPEONATO <span className="text-valorant-red">UNIA</span>
             </span>
           </Link>
-          <span className={`px-3 py-1 text-xs font-rajdhani font-bold tracking-wider ${statusClass}`}>
-            {statusLabel}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-rajdhani font-bold tracking-wider text-gray-400 uppercase">
+              {streaming.plataforma}
+            </span>
+            <span className={`px-3 py-1 text-xs font-rajdhani font-bold tracking-wider ${statusClass}`}>
+              {statusLabel}
+            </span>
+          </div>
         </div>
       </nav>
 
@@ -146,19 +204,19 @@ export default async function AssistirPage({ params }: PageProps) {
 
       {/* Vídeo + Chat */}
       <section className="relative z-10 flex-1 min-h-0 bg-black flex">
-        <div className={`flex-1 h-full ${isAoVivo ? 'w-2/3' : 'w-full'}`}>
+        <div className={`flex-1 h-full ${mostrarChat ? 'w-2/3' : 'w-full'}`}>
           <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
+            src={videoUrl}
             title="Transmissão da partida"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             className="w-full h-full"
           />
         </div>
-        {isAoVivo && (
+        {mostrarChat && chatUrl && (
           <div className="w-80 md:w-96 h-full border-l border-white/10 bg-white hidden md:block">
             <iframe
-              src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${embedDomain}`}
+              src={chatUrl}
               title="Chat ao vivo"
               className="w-full h-full"
             />
