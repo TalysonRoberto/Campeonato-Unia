@@ -1,0 +1,139 @@
+import Image from 'next/image';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { carregarDados } from '@/lib/data';
+
+export const dynamic = 'force-dynamic';
+
+function extrairVideoId(url: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function getTimePorId(id: string, times: any[]) {
+  return times.find(t => t.id === id) || { nome: 'Time não encontrado', logo: '/img/logo.png', cor: '#ffffff' };
+}
+
+interface PageProps {
+  params: Promise<{ partidaId: string }>;
+}
+
+export default async function AssistirPage({ params }: PageProps) {
+  const { partidaId } = await params;
+  const dados = await carregarDados();
+
+  const partida = dados.partidas.find(p => p.id === partidaId);
+  if (!partida || !partida.transmissao) {
+    notFound();
+  }
+
+  const videoId = extrairVideoId(partida.transmissao);
+  if (!videoId) {
+    notFound();
+  }
+
+  const timeA = getTimePorId(partida.timeA, dados.times);
+  const timeB = getTimePorId(partida.timeB, dados.times);
+
+  const statusLabel = partida.status === 'ao_vivo' ? 'AO VIVO' : partida.status === 'finalizada' ? 'FINALIZADA' : 'AGENDADA';
+  const statusClass = partida.status === 'ao_vivo'
+    ? 'bg-red-600 text-white animate-pulse'
+    : partida.status === 'finalizada'
+      ? 'bg-white/10 text-gray-300'
+      : 'bg-valorant-red/20 text-valorant-red';
+
+  const dataFormatada = partida.data
+    ? new Date(partida.data + 'T00:00').toLocaleDateString('pt-BR')
+    : 'A definir';
+
+  return (
+    <main className="relative min-h-screen bg-valorant-dark text-white overflow-x-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-valorant-red/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-valorant-purple/10 rounded-full blur-[120px]" />
+      </div>
+
+      {/* Header */}
+      <nav className="relative z-10 bg-valorant-darker/80 backdrop-blur-xl border-b border-white/10">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <Image src="/img/logo.png" alt="Campeonato Unia" width={40} height={40} className="h-10 w-auto object-contain" />
+            <span className="font-rajdhani font-bold text-lg tracking-wider">
+              CAMPEONATO <span className="text-valorant-red">UNIA</span>
+            </span>
+          </Link>
+          <span className={`px-3 py-1 text-xs font-rajdhani font-bold tracking-wider ${statusClass}`}>
+            {statusLabel}
+          </span>
+        </div>
+      </nav>
+
+      {/* Match info */}
+      <section className="relative z-10 py-8 border-b border-white/10 bg-valorant-darker/50">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
+            {/* Time A */}
+            <div className="flex flex-col items-center text-center flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                {timeA.cor && <div className="w-1.5 h-12 rounded-sm" style={{ backgroundColor: timeA.cor }} />}
+                <Image src={timeA.logo} alt={timeA.nome} width={80} height={80} className="w-20 h-20 object-contain" />
+              </div>
+              <h2 className="font-rajdhani font-bold text-2xl md:text-3xl">{timeA.nome}</h2>
+            </div>
+
+            {/* Placar */}
+            <div className="flex flex-col items-center px-6">
+              <div className="flex items-center gap-4 text-5xl md:text-7xl font-rajdhani font-bold">
+                <span className={partida.vencedor === timeA.id ? 'text-valorant-red' : ''}>{partida.placarA}</span>
+                <span className="text-gray-500">-</span>
+                <span className={partida.vencedor === timeB.id ? 'text-valorant-red' : ''}>{partida.placarB}</span>
+              </div>
+              <span className="text-gray-400 text-sm font-rajdhani uppercase mt-2">{partida.fase}</span>
+              <span className="text-gray-500 text-sm font-rajdhani mt-1">{dataFormatada} às {partida.horario || '--:--'}</span>
+            </div>
+
+            {/* Time B */}
+            <div className="flex flex-col items-center text-center flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <Image src={timeB.logo} alt={timeB.nome} width={80} height={80} className="w-20 h-20 object-contain" />
+                {timeB.cor && <div className="w-1.5 h-12 rounded-sm" style={{ backgroundColor: timeB.cor }} />}
+              </div>
+              <h2 className="font-rajdhani font-bold text-2xl md:text-3xl">{timeB.nome}</h2>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Vídeo */}
+      <section className="relative z-10 py-8 md:py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="relative w-full aspect-video border border-white/10 bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}`}
+                title="Transmissão da partida"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 py-8 border-t border-white/10 bg-valorant-darker text-center">
+        <p className="text-gray-500 font-rajdhani tracking-wider">CAMPEONATO UNIA © 2026 - TORNEIO DE VALORANT</p>
+      </footer>
+    </main>
+  );
+}

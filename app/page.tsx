@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { carregarDados, getClassificacao, getChaveamento, faseDeGruposFinalizada } from '@/lib/data';
-import YouTubeModalButton from './components/YouTubeModalButton';
 import PlayoffBracket from './components/PlayoffBracket';
 
 export const dynamic = 'force-dynamic';
@@ -282,21 +281,14 @@ export default async function HomePage() {
                       <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                         <span className="text-gray-400 text-sm font-rajdhani">{dataFormatada} às {partida.horario || '--:--'}</span>
                         {partida.transmissao && (
-                          <YouTubeModalButton
-                            url={partida.transmissao}
-                            label="ASSISTIR"
+                          <Link
+                            href={`/assistir/${partida.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-valorant-red hover:text-valorant-red-light font-semibold text-sm transition-colors"
-                            partida={{
-                              timeA,
-                              timeB,
-                              placarA: partida.placarA,
-                              placarB: partida.placarB,
-                              status: partida.status,
-                              fase: partida.fase,
-                              data: partida.data,
-                              horario: partida.horario
-                            }}
-                          />
+                          >
+                            ASSISTIR
+                          </Link>
                         )}
                       </div>
                     </div>
@@ -378,21 +370,14 @@ export default async function HomePage() {
                       </div>
                       {partida.transmissao && (
                         <div className="mt-4 pt-4 border-t border-white/10">
-                          <YouTubeModalButton
-                            url={partida.transmissao}
-                            label="ASSISTIR GRAVAÇÃO"
+                          <Link
+                            href={`/assistir/${partida.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-valorant-red hover:text-valorant-red-light font-semibold transition-colors"
-                            partida={{
-                              timeA,
-                              timeB,
-                              placarA: partida.placarA,
-                              placarB: partida.placarB,
-                              status: partida.status,
-                              fase: partida.fase,
-                              data: partida.data,
-                              horario: partida.horario
-                            }}
-                          />
+                          >
+                            ASSISTIR GRAVAÇÃO
+                          </Link>
                         </div>
                       )}
                     </div>
