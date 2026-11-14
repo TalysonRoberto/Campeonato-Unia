@@ -9,10 +9,14 @@ interface Time {
   nome: string;
   jogadores: string[];
   logo: string;
+  logoId?: string | null;
   cor: string;
   vitorias: number;
+  empates: number;
   derrotas: number;
   pontos: number;
+  mapasGanhos: number;
+  mapasPerdidos: number;
 }
 
 const CORES_TIME = [
@@ -231,16 +235,10 @@ export default function AdminPage() {
     const placarA = parseInt(dados.placarA) || 0;
     const placarB = parseInt(dados.placarB) || 0;
 
-    // Vencedor é quem fizer 2 pontos (mapas) primeiro
-    let vencedor = null;
-    if (placarA >= 2 && placarA > placarB) vencedor = partidaEditando.timeA;
-    else if (placarB >= 2 && placarB > placarA) vencedor = partidaEditando.timeB;
-
     const payload = {
       status: dados.status,
       placarA,
       placarB,
-      vencedor,
       transmissao: dados.transmissao || ''
     };
 
@@ -589,17 +587,22 @@ export default function AdminPage() {
                       <th className="text-left bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">POS</th>
                       <th className="text-left bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">TIME</th>
                       <th className="text-center bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">V</th>
+                      <th className="text-center bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">E</th>
                       <th className="text-center bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">D</th>
+                      <th className="text-center bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">SALDO</th>
                       <th className="text-center bg-valorant-red/10 px-4 py-3 font-rajdhani font-bold text-valorant-red border-b-2 border-valorant-red">PTS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {times.length === 0 ? (
-                      <tr><td colSpan={5} className="text-center py-4 text-gray-500">Nenhum time classificado</td></tr>
+                      <tr><td colSpan={7} className="text-center py-4 text-gray-500">Nenhum time classificado</td></tr>
                     ) : (
                       [...times]
                         .sort((a, b) => {
                           if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+                          const saldoA = a.mapasGanhos - a.mapasPerdidos;
+                          const saldoB = b.mapasGanhos - b.mapasPerdidos;
+                          if (saldoB !== saldoA) return saldoB - saldoA;
                           if (b.vitorias !== a.vitorias) return b.vitorias - a.vitorias;
                           return a.derrotas - b.derrotas;
                         })
@@ -614,7 +617,9 @@ export default function AdminPage() {
                               </div>
                             </td>
                             <td className="text-center px-4 py-3 font-rajdhani font-bold">{time.vitorias}</td>
+                            <td className="text-center px-4 py-3 font-rajdhani font-bold">{time.empates}</td>
                             <td className="text-center px-4 py-3 font-rajdhani font-bold">{time.derrotas}</td>
+                            <td className="text-center px-4 py-3 font-rajdhani font-bold">{time.mapasGanhos - time.mapasPerdidos}</td>
                             <td className="text-center px-4 py-3 font-rajdhani font-bold text-valorant-red">{time.pontos}</td>
                           </tr>
                         ))
@@ -768,7 +773,11 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg p-6 border border-white/10 bg-valorant-darker max-h-[90vh] overflow-y-auto">
             <h3 className="font-rajdhani font-bold text-2xl mb-2">REGISTRAR RESULTADO</h3>
-            <p className="text-gray-400 text-sm mb-6">Quem fizer 2 pontos (mapas) primeiro vence a série MD3.</p>
+            <p className="text-gray-400 text-sm mb-6">
+              {partidaEditando.fase === 'grupos'
+                ? 'Fase de grupos: melhor de 2 mapas. 2x0 = vitória, 1x1 = empate.'
+                : 'Playoffs: melhor de 3 mapas. Quem fizer 2 pontos primeiro vence.'}
+            </p>
 
             <div className="flex items-center justify-between gap-4 mb-6 p-4 bg-white/5 border border-white/10">
               <div className="flex items-center gap-3 flex-1 justify-center">
@@ -795,11 +804,11 @@ export default function AdminPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-rajdhani font-bold tracking-wider text-gray-400 mb-2">{getTimePorId(partidaEditando.timeA).nome}</label>
-                  <input type="number" name="placarA" min="0" max="3" defaultValue={partidaEditando.placarA} className="admin-input text-center text-2xl py-4" />
+                  <input type="number" name="placarA" min="0" max={partidaEditando.fase === 'grupos' ? 2 : 3} defaultValue={partidaEditando.placarA} className="admin-input text-center text-2xl py-4" />
                 </div>
                 <div>
                   <label className="block text-sm font-rajdhani font-bold tracking-wider text-gray-400 mb-2">{getTimePorId(partidaEditando.timeB).nome}</label>
-                  <input type="number" name="placarB" min="0" max="3" defaultValue={partidaEditando.placarB} className="admin-input text-center text-2xl py-4" />
+                  <input type="number" name="placarB" min="0" max={partidaEditando.fase === 'grupos' ? 2 : 3} defaultValue={partidaEditando.placarB} className="admin-input text-center text-2xl py-4" />
                 </div>
               </div>
               <div>

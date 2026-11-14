@@ -56,6 +56,7 @@ export interface Time {
   logoId?: string | null;
   cor: string;
   vitorias: number;
+  empates: number;
   derrotas: number;
   pontos: number;
   mapasGanhos: number;
@@ -120,6 +121,7 @@ function docToTime(doc: any): Time {
     logoId: doc.logoId || null,
     cor: doc.cor || CORES_TIME[0].valor,
     vitorias: doc.vitorias || 0,
+    empates: doc.empates || 0,
     derrotas: doc.derrotas || 0,
     pontos: doc.pontos || 0,
     mapasGanhos: doc.mapasGanhos || 0,
@@ -212,6 +214,7 @@ export async function atualizarEstatisticasTimes(dados?: Dados): Promise<void> {
 
   for (const time of data.times) {
     time.vitorias = 0;
+    time.empates = 0;
     time.derrotas = 0;
     time.pontos = 0;
     time.mapasGanhos = 0;
@@ -219,29 +222,39 @@ export async function atualizarEstatisticasTimes(dados?: Dados): Promise<void> {
   }
 
   for (const partida of data.partidas) {
-    if (partida.fase !== 'grupos' || partida.status !== 'finalizada' || !partida.vencedor) continue;
+    if (partida.fase !== 'grupos' || partida.status !== 'finalizada') continue;
 
     const timeA = data.times.find(t => t.id === partida.timeA);
     const timeB = data.times.find(t => t.id === partida.timeB);
     if (!timeA || !timeB) continue;
 
-    const pontosVitoria = data.configuracoes?.pontosVitoria || 50;
-
-    const vencedor = data.times.find(t => t.id === partida.vencedor);
-    const perdedor = partida.vencedor === partida.timeA ? timeB : timeA;
-
-    if (vencedor) {
-      vencedor.vitorias += 1;
-      vencedor.pontos += pontosVitoria;
-    }
-    if (perdedor) {
-      perdedor.derrotas += 1;
-    }
-
     timeA.mapasGanhos += partida.placarA;
     timeA.mapasPerdidos += partida.placarB;
     timeB.mapasGanhos += partida.placarB;
     timeB.mapasPerdidos += partida.placarA;
+
+    const placarA = partida.placarA;
+    const placarB = partida.placarB;
+
+    // Nova pontuação da fase de grupos:
+    // 2x0 -> vencedor 100 pts, perdedor 25 pts
+    // 1x1 -> empate, ambos 50 pts
+    if (placarA === 2 && placarB === 0) {
+      timeA.vitorias += 1;
+      timeA.pontos += 100;
+      timeB.derrotas += 1;
+      timeB.pontos += 25;
+    } else if (placarB === 2 && placarA === 0) {
+      timeB.vitorias += 1;
+      timeB.pontos += 100;
+      timeA.derrotas += 1;
+      timeA.pontos += 25;
+    } else if (placarA === 1 && placarB === 1) {
+      timeA.empates += 1;
+      timeA.pontos += 50;
+      timeB.empates += 1;
+      timeB.pontos += 50;
+    }
   }
 
   // Persiste no banco ou no JSON
@@ -249,6 +262,7 @@ export async function atualizarEstatisticasTimes(dados?: Dados): Promise<void> {
     for (const time of data.times) {
       await TimeModel.findByIdAndUpdate(time.id, {
         vitorias: time.vitorias,
+        empates: time.empates,
         derrotas: time.derrotas,
         pontos: time.pontos,
         mapasGanhos: time.mapasGanhos,

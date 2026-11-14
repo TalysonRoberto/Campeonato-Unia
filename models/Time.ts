@@ -7,6 +7,7 @@ export interface ITime extends Document {
   logoId?: string;
   cor: string;
   vitorias: number;
+  empates: number;
   derrotas: number;
   pontos: number;
   mapasGanhos: number;
@@ -20,6 +21,7 @@ const TimeSchema = new Schema<ITime>({
   logoId: { type: String, default: null },
   cor: { type: String, default: '#14b8a6' },
   vitorias: { type: Number, default: 0 },
+  empates: { type: Number, default: 0 },
   derrotas: { type: Number, default: 0 },
   pontos: { type: Number, default: 0 },
   mapasGanhos: { type: Number, default: 0 },

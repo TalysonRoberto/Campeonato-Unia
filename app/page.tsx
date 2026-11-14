@@ -172,6 +172,7 @@ export default async function HomePage() {
                     <th className="text-left bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">POS</th>
                     <th className="text-left bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">TIME</th>
                     <th className="text-center bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">V</th>
+                    <th className="text-center bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">E</th>
                     <th className="text-center bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">D</th>
                     <th className="text-center bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">SALDO</th>
                     <th className="text-center bg-valorant-red/10 px-6 py-4 font-rajdhani font-bold tracking-wider text-valorant-red border-b-2 border-valorant-red">PTS</th>
@@ -181,7 +182,7 @@ export default async function HomePage() {
                 <tbody>
                   {classificacao.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-gray-500">
+                      <td colSpan={8} className="text-center py-12 text-gray-500">
                         <p className="text-xl font-rajdhani">Nenhuma partida registrada</p>
                       </td>
                     </tr>
@@ -213,6 +214,7 @@ export default async function HomePage() {
                             </div>
                           </td>
                           <td className="text-center px-6 py-5 font-rajdhani font-bold text-lg">{time.vitorias}</td>
+                          <td className="text-center px-6 py-5 font-rajdhani font-bold text-lg">{time.empates}</td>
                           <td className="text-center px-6 py-5 font-rajdhani font-bold text-lg">{time.derrotas}</td>
                           <td className="text-center px-6 py-5 font-rajdhani font-bold text-lg">{time.mapasGanhos - time.mapasPerdidos}</td>
                           <td className="text-center px-6 py-5 font-rajdhani font-bold text-xl text-valorant-red">{time.pontos}</td>
@@ -346,13 +348,16 @@ export default async function HomePage() {
                 .map((partida) => {
                   const timeA = getTimePorId(partida.timeA, dados.times);
                   const timeB = getTimePorId(partida.timeB, dados.times);
-                  const vencedor = getTimePorId(partida.vencedor || '', dados.times);
+                  const vencedor = partida.vencedor ? getTimePorId(partida.vencedor, dados.times) : null;
+                  const isEmpate = partida.fase === 'grupos' && !partida.vencedor && partida.status === 'finalizada';
 
                   return (
                     <div key={partida.id} className="bg-white/5 border border-white/10 p-6 hover:-translate-y-1 hover:border-valorant-red/30 transition-all duration-300">
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-gray-400 text-sm font-rajdhani tracking-wider uppercase">{partida.fase}</span>
-                        <span className="text-yellow-400 font-rajdhani font-bold text-sm">VENCEDOR: {vencedor.nome}</span>
+                        <span className={`font-rajdhani font-bold text-sm ${isEmpate ? 'text-gray-400' : 'text-yellow-400'}`}>
+                          {isEmpate ? 'EMPATE' : `VENCEDOR: ${vencedor?.nome}`}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3 flex-1">

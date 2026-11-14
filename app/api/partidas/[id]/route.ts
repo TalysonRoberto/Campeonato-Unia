@@ -42,9 +42,35 @@ export async function PUT(
       }
     });
 
+    // Calcula vencedor automaticamente
+    if (partida.status === 'finalizada') {
+      const placarA = Number(partida.placarA) || 0;
+      const placarB = Number(partida.placarB) || 0;
+
+      if (partida.fase === 'grupos') {
+        // Fase de grupos: melhor de 2 (2x0 ou 1x1)
+        if (placarA === 2 && placarB === 0) {
+          partida.vencedor = partida.timeA;
+        } else if (placarB === 2 && placarA === 0) {
+          partida.vencedor = partida.timeB;
+        } else {
+          partida.vencedor = null; // empate
+        }
+      } else {
+        // Playoffs: melhor de 3 (primeiro a 2 mapas)
+        if (placarA >= 2 && placarA > placarB) {
+          partida.vencedor = partida.timeA;
+        } else if (placarB >= 2 && placarB > placarA) {
+          partida.vencedor = partida.timeB;
+        } else {
+          partida.vencedor = null;
+        }
+      }
+    }
+
     await partida.save();
 
-    if (partida.status === 'finalizada' && partida.vencedor) {
+    if (partida.status === 'finalizada') {
       await atualizarEstatisticasTimes();
 
       const dados = await carregarDados();

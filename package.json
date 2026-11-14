@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "migrate": "tsx scripts/migrar-json-mongodb.ts",
-    "migrate:imagens": "tsx scripts/migrar-imagens-gridfs.ts"
+    "migrate:imagens": "tsx scripts/migrar-imagens-gridfs.ts",
+    "recalcular": "tsx scripts/recalcular-classificacao.ts"
   },
   "dependencies": {
     "mongoose": "^9.12.1",
