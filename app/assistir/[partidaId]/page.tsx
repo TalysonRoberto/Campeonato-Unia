@@ -109,7 +109,11 @@ export default async function AssistirPage({ params }: PageProps) {
     : 'A definir';
 
   const isAoVivo = partida.status === 'ao_vivo';
-  const mostrarChat = isAoVivo && streaming.plataforma !== 'twitch' || (isAoVivo && streaming.plataforma === 'twitch' && streaming.tipo === 'channel');
+  // YouTube: chat só funciona em lives
+  // Twitch: chat do canal pode ser exibido mesmo offline
+  const mostrarChat =
+    (streaming.plataforma === 'youtube' && isAoVivo) ||
+    (streaming.plataforma === 'twitch' && streaming.tipo === 'channel');
 
   // Resultado quando finalizada
   let resultadoTexto = '';
