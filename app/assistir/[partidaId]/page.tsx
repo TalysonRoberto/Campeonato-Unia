@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { carregarDados } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,10 @@ export default async function AssistirPage({ params }: PageProps) {
   const timeA = getTimePorId(partida.timeA, dados.times);
   const timeB = getTimePorId(partida.timeB, dados.times);
 
+  const headersList = await headers();
+  const host = headersList.get('host') || 'localhost:3000';
+  const embedDomain = host.includes('localhost') ? 'localhost' : host;
+
   const statusLabel = partida.status === 'ao_vivo' ? 'AO VIVO' : partida.status === 'finalizada' ? 'FINALIZADA' : 'AGENDADA';
   const statusClass = partida.status === 'ao_vivo'
     ? 'bg-red-600 text-white animate-pulse'
@@ -53,6 +58,8 @@ export default async function AssistirPage({ params }: PageProps) {
   const dataFormatada = partida.data
     ? new Date(partida.data + 'T00:00').toLocaleDateString('pt-BR')
     : 'A definir';
+
+  const isAoVivo = partida.status === 'ao_vivo';
 
   // Resultado quando finalizada
   let resultadoTexto = '';
@@ -137,9 +144,9 @@ export default async function AssistirPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* Vídeo grande */}
-      <section className="relative z-10 flex-1 min-h-0 bg-black">
-        <div className="w-full h-full">
+      {/* Vídeo + Chat */}
+      <section className="relative z-10 flex-1 min-h-0 bg-black flex">
+        <div className={`flex-1 h-full ${isAoVivo ? 'w-2/3' : 'w-full'}`}>
           <iframe
             src={`https://www.youtube.com/embed/${videoId}`}
             title="Transmissão da partida"
@@ -148,6 +155,15 @@ export default async function AssistirPage({ params }: PageProps) {
             className="w-full h-full"
           />
         </div>
+        {isAoVivo && (
+          <div className="w-80 md:w-96 h-full border-l border-white/10 bg-white hidden md:block">
+            <iframe
+              src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${embedDomain}`}
+              title="Chat ao vivo"
+              className="w-full h-full"
+            />
+          </div>
+        )}
       </section>
     </main>
   );
