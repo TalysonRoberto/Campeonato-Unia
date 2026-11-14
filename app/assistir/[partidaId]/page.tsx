@@ -54,8 +54,24 @@ export default async function AssistirPage({ params }: PageProps) {
     ? new Date(partida.data + 'T00:00').toLocaleDateString('pt-BR')
     : 'A definir';
 
+  // Resultado quando finalizada
+  let resultadoTexto = '';
+  let resultadoClasse = '';
+  if (partida.status === 'finalizada') {
+    if (!partida.vencedor) {
+      resultadoTexto = 'EMPATE';
+      resultadoClasse = 'text-gray-400';
+    } else if (partida.vencedor === timeA.id) {
+      resultadoTexto = `${timeA.nome} VENCEU`;
+      resultadoClasse = 'text-valorant-red';
+    } else {
+      resultadoTexto = `${timeB.nome} VENCEU`;
+      resultadoClasse = 'text-valorant-red';
+    }
+  }
+
   return (
-    <main className="relative min-h-screen bg-valorant-dark text-white overflow-x-hidden">
+    <main className="relative h-screen flex flex-col bg-valorant-dark text-white overflow-hidden">
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-valorant-red/10 rounded-full blur-[120px]" />
@@ -63,11 +79,11 @@ export default async function AssistirPage({ params }: PageProps) {
       </div>
 
       {/* Header */}
-      <nav className="relative z-10 bg-valorant-darker/80 backdrop-blur-xl border-b border-white/10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <nav className="relative z-10 shrink-0 bg-valorant-darker/80 backdrop-blur-xl border-b border-white/10">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <Image src="/img/logo.png" alt="Campeonato Unia" width={40} height={40} className="h-10 w-auto object-contain" />
-            <span className="font-rajdhani font-bold text-lg tracking-wider">
+            <Image src="/img/logo.png" alt="Campeonato Unia" width={32} height={32} className="h-8 w-auto object-contain" />
+            <span className="font-rajdhani font-bold text-base tracking-wider">
               CAMPEONATO <span className="text-valorant-red">UNIA</span>
             </span>
           </Link>
@@ -77,63 +93,62 @@ export default async function AssistirPage({ params }: PageProps) {
         </div>
       </nav>
 
-      {/* Match info */}
-      <section className="relative z-10 py-8 border-b border-white/10 bg-valorant-darker/50">
+      {/* Match info compacta */}
+      <section className="relative z-10 shrink-0 py-3 border-b border-white/10 bg-valorant-darker/50">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
+          <div className="flex items-center justify-center gap-4 md:gap-8">
             {/* Time A */}
-            <div className="flex flex-col items-center text-center flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                {timeA.cor && <div className="w-1.5 h-12 rounded-sm" style={{ backgroundColor: timeA.cor }} />}
-                <Image src={timeA.logo} alt={timeA.nome} width={80} height={80} className="w-20 h-20 object-contain" />
+            <div className="flex items-center gap-2 md:gap-3 flex-1 justify-end">
+              <span className="font-rajdhani font-bold text-base md:text-xl text-right hidden sm:inline">{timeA.nome}</span>
+              <div className="flex items-center gap-1.5">
+                {timeA.cor && <div className="w-1 h-8 rounded-sm" style={{ backgroundColor: timeA.cor }} />}
+                <Image src={timeA.logo} alt={timeA.nome} width={40} height={40} className="w-10 h-10 object-contain" />
               </div>
-              <h2 className="font-rajdhani font-bold text-2xl md:text-3xl">{timeA.nome}</h2>
             </div>
 
             {/* Placar */}
-            <div className="flex flex-col items-center px-6">
-              <div className="flex items-center gap-4 text-5xl md:text-7xl font-rajdhani font-bold">
+            <div className="flex flex-col items-center px-2 md:px-4">
+              <div className="flex items-center gap-2 md:gap-3 text-3xl md:text-5xl font-rajdhani font-bold leading-none">
                 <span className={partida.vencedor === timeA.id ? 'text-valorant-red' : ''}>{partida.placarA}</span>
                 <span className="text-gray-500">-</span>
                 <span className={partida.vencedor === timeB.id ? 'text-valorant-red' : ''}>{partida.placarB}</span>
               </div>
-              <span className="text-gray-400 text-sm font-rajdhani uppercase mt-2">{partida.fase}</span>
-              <span className="text-gray-500 text-sm font-rajdhani mt-1">{dataFormatada} às {partida.horario || '--:--'}</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-gray-400 text-xs font-rajdhani uppercase">{partida.fase}</span>
+                <span className="text-gray-600 text-xs">|</span>
+                <span className="text-gray-500 text-xs font-rajdhani">{dataFormatada} {partida.horario}</span>
+              </div>
+              {partida.status === 'finalizada' && (
+                <span className={`font-rajdhani font-bold text-sm tracking-wider mt-0.5 ${resultadoClasse}`}>
+                  {resultadoTexto}
+                </span>
+              )}
             </div>
 
             {/* Time B */}
-            <div className="flex flex-col items-center text-center flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <Image src={timeB.logo} alt={timeB.nome} width={80} height={80} className="w-20 h-20 object-contain" />
-                {timeB.cor && <div className="w-1.5 h-12 rounded-sm" style={{ backgroundColor: timeB.cor }} />}
+            <div className="flex items-center gap-2 md:gap-3 flex-1 justify-start">
+              <div className="flex items-center gap-1.5">
+                <Image src={timeB.logo} alt={timeB.nome} width={40} height={40} className="w-10 h-10 object-contain" />
+                {timeB.cor && <div className="w-1 h-8 rounded-sm" style={{ backgroundColor: timeB.cor }} />}
               </div>
-              <h2 className="font-rajdhani font-bold text-2xl md:text-3xl">{timeB.nome}</h2>
+              <span className="font-rajdhani font-bold text-base md:text-xl hidden sm:inline">{timeB.nome}</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Vídeo */}
-      <section className="relative z-10 py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="relative w-full aspect-video border border-white/10 bg-black">
-              <iframe
-                src={`https://www.youtube.com/embed/${videoId}`}
-                title="Transmissão da partida"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              />
-            </div>
-          </div>
+      {/* Vídeo grande */}
+      <section className="relative z-10 flex-1 min-h-0 bg-black">
+        <div className="w-full h-full">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title="Transmissão da partida"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="w-full h-full"
+          />
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 py-8 border-t border-white/10 bg-valorant-darker text-center">
-        <p className="text-gray-500 font-rajdhani tracking-wider">CAMPEONATO UNIA © 2026 - TORNEIO DE VALORANT</p>
-      </footer>
     </main>
   );
 }
