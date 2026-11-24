@@ -134,8 +134,8 @@ export default async function HomePage() {
               {dados.times.map((time, index) => (
                 <div key={time.id} className="bg-white/5 border border-white/10 p-6 hover:-translate-y-2 hover:border-valorant-red/30 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_30px_rgba(255,70,85,0.1)] transition-all duration-300 animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
                   <div className="flex flex-col items-center text-center">
-                    <div className="w-28 h-28 mb-4 p-4 flex items-center justify-center">
-                      <Image src={time.logo} alt={time.nome} width={112} height={112} className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(255,70,85,0.3)]" />
+                    <div className="w-36 h-36 md:w-44 md:h-44 mb-5 flex items-center justify-center">
+                      <Image src={time.logo} alt={time.nome} width={176} height={176} className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,70,85,0.35)]" />
                     </div>
                     <h3 className="font-rajdhani font-bold text-2xl text-white mb-3">{time.nome}</h3>
                     <div className="flex flex-wrap justify-center gap-2">
