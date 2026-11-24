@@ -8,7 +8,7 @@ export default function HeroVideo() {
 
   return (
     <div
-      className="relative w-full max-w-md lg:max-w-lg aspect-video rounded-lg overflow-hidden border border-white/10 shadow-[0_0_60px_rgba(255,70,85,0.15)] bg-black"
+      className="relative w-full max-w-md lg:max-w-2xl xl:max-w-3xl aspect-video rounded-lg overflow-hidden border border-white/10 shadow-[0_0_60px_rgba(255,70,85,0.15)] bg-black"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
