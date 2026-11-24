@@ -27,6 +27,7 @@ export default function HeroVideo() {
     const unmuteOnInteraction = () => {
       if (video && video.muted) {
         video.muted = false;
+        video.volume = 0.3;
         setMuted(false);
         setNeedsInteraction(false);
       }
@@ -47,8 +48,11 @@ export default function HeroVideo() {
     const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
+    if (!video.muted) {
+      video.volume = 0.3;
+      setNeedsInteraction(false);
+    }
     setMuted(video.muted);
-    if (!video.muted) setNeedsInteraction(false);
   };
 
   return (
