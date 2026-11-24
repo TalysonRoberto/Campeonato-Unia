@@ -452,14 +452,40 @@ export async function gerarFinalEDisputaTerceiro(dados: Dados): Promise<boolean>
   return false;
 }
 
+function slotClassificado(posicao: number): Time {
+  return {
+    id: `classificado-${posicao}`,
+    nome: `${posicao}º do Grupo`,
+    jogadores: [],
+    logo: '/img/logo.png',
+    logoId: null,
+    cor: '#6b7280',
+    vitorias: 0,
+    empates: 0,
+    derrotas: 0,
+    pontos: 0,
+    mapasGanhos: 0,
+    mapasPerdidos: 0
+  };
+}
+
 export async function getChaveamento(): Promise<any> {
   const dados = await carregarDados();
   const classificacao = await getClassificacao();
   const totalTimes = classificacao.length;
+  const totalTimesInscritos = dados.times.length;
+
+  // Preview: exibe bracket mesmo antes da fase de grupos terminar
+  const isPreview = totalTimes === 0 && totalTimesInscritos >= 4;
+  const slots = isPreview
+    ? [slotClassificado(1), slotClassificado(2), slotClassificado(3), slotClassificado(4)]
+    : classificacao;
+  const slotsCount = slots.length;
 
   const playoffs: any = {
-    formato: totalTimes <= 4 ? 'top3' : 'top4',
-    timesClassificados: totalTimes,
+    formato: slotsCount <= 4 ? 'top4' : 'top4',
+    timesClassificados: slotsCount,
+    isPreview,
     semifinais: [],
     final: null,
     disputaTerceiro: null,
@@ -468,23 +494,39 @@ export async function getChaveamento(): Promise<any> {
 
   const partidasPlayoffs = dados.partidas.filter(p => p.fase !== 'grupos');
 
-  if (totalTimes === 4) {
+  if (slotsCount === 4) {
     const partidaFinal = partidasPlayoffs.find(p => p.fase === 'final');
-    playoffs.semifinais = [{
-      id: 'sf1',
-      nome: 'Semifinal',
-      timeA: classificacao[1],
-      timeB: classificacao[2],
-      partida: partidasPlayoffs.find(p => p.fase === 'semifinal')
-    }];
+    playoffs.semifinais = [
+      {
+        id: 'sf1',
+        nome: 'Semifinal 1',
+        timeA: slots[0],
+        timeB: slots[2],
+        partida: partidasPlayoffs.find(p => p.fase === 'semifinal1')
+      },
+      {
+        id: 'sf2',
+        nome: 'Semifinal 2',
+        timeA: slots[1],
+        timeB: slots[3],
+        partida: partidasPlayoffs.find(p => p.fase === 'semifinal2')
+      }
+    ];
     playoffs.final = {
       id: 'f1',
       nome: 'Final',
-      timeA: partidaFinal?.timeA ? classificacao.find(t => t.id === partidaFinal.timeA) || classificacao[0] : classificacao[0],
-      timeB: partidaFinal?.timeB ? classificacao.find(t => t.id === partidaFinal.timeB) || null : null,
+      timeA: partidaFinal?.timeA ? slots.find((t: Time) => t.id === partidaFinal.timeA) || null : null,
+      timeB: partidaFinal?.timeB ? slots.find((t: Time) => t.id === partidaFinal.timeB) || null : null,
       partida: partidaFinal
     };
-  } else if (totalTimes > 4) {
+    playoffs.disputaTerceiro = {
+      id: 't1',
+      nome: 'Disputa 3º Lugar',
+      timeA: null,
+      timeB: null,
+      partida: null
+    };
+  } else if (slotsCount > 4) {
     const partidaFinal = partidasPlayoffs.find(p => p.fase === 'final');
     const partidaTerceiro = partidasPlayoffs.find(p => p.fase === 'terceiro');
 
@@ -492,30 +534,30 @@ export async function getChaveamento(): Promise<any> {
       {
         id: 'sf1',
         nome: 'Semifinal 1',
-        timeA: classificacao[0],
-        timeB: classificacao[2],
+        timeA: slots[0],
+        timeB: slots[2],
         partida: partidasPlayoffs.find(p => p.fase === 'semifinal1')
       },
       {
         id: 'sf2',
         nome: 'Semifinal 2',
-        timeA: classificacao[1],
-        timeB: classificacao[3],
+        timeA: slots[1],
+        timeB: slots[3],
         partida: partidasPlayoffs.find(p => p.fase === 'semifinal2')
       }
     ];
     playoffs.final = {
       id: 'f1',
       nome: 'Final',
-      timeA: partidaFinal?.timeB ? classificacao.find(t => t.id === partidaFinal.timeA) || null : null,
-      timeB: partidaFinal?.timeB ? classificacao.find(t => t.id === partidaFinal.timeB) || null : null,
+      timeA: partidaFinal?.timeB ? slots.find((t: Time) => t.id === partidaFinal.timeA) || null : null,
+      timeB: partidaFinal?.timeB ? slots.find((t: Time) => t.id === partidaFinal.timeB) || null : null,
       partida: partidaFinal
     };
     playoffs.disputaTerceiro = {
       id: 't1',
       nome: 'Disputa 3º Lugar',
-      timeA: partidaTerceiro?.timeA ? classificacao.find(t => t.id === partidaTerceiro.timeA) || null : null,
-      timeB: partidaTerceiro?.timeB ? classificacao.find(t => t.id === partidaTerceiro.timeB) || null : null,
+      timeA: partidaTerceiro?.timeA ? slots.find((t: Time) => t.id === partidaTerceiro.timeA) || null : null,
+      timeB: partidaTerceiro?.timeB ? slots.find((t: Time) => t.id === partidaTerceiro.timeB) || null : null,
       partida: partidaTerceiro
     };
   }

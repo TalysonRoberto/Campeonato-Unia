@@ -306,18 +306,20 @@ export default async function HomePage() {
             <h2 className="font-rajdhani font-bold text-4xl md:text-5xl mb-2">CHAVEAMENTO <span className="text-valorant-red">PLAYOFFS</span></h2>
             <div className="h-1 w-24 bg-valorant-red" />
           </div>
-          {!faseDeGruposFinalizada(dados) ? (
+          {dados.times.length < 4 ? (
             <div className="text-center py-16 text-gray-500 bg-white/5 border border-white/10">
-              <p className="text-2xl font-rajdhani mb-2">CHAVEAMENTO INDISPONÍVEL</p>
-              <p>O chaveamento de playoffs será exibido após o término da fase de grupos.</p>
-            </div>
-          ) : chaveamento.timesClassificados < 4 ? (
-            <div className="text-center py-16 text-gray-500">
               <p className="text-2xl font-rajdhani mb-2">CHAVEAMENTO INDISPONÍVEL</p>
               <p>São necessários pelo menos 4 times para exibir os playoffs</p>
             </div>
           ) : (
-            <PlayoffBracket chaveamento={chaveamento} />
+            <>
+              {chaveamento.isPreview && (
+                <div className="mb-6 text-center bg-white/5 border border-white/10 py-4">
+                  <p className="text-gray-400 font-rajdhani tracking-wide">A fase de grupos ainda não terminou. Este é o chaveamento previsto dos playoffs.</p>
+                </div>
+              )}
+              <PlayoffBracket chaveamento={chaveamento} />
+            </>
           )}
         </div>
       </section>
