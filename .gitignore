@@ -30,3 +30,6 @@ data/
 
 # --- Imagens locais (agora no GridFS) ---
 public/img/times/
+
+# --- Vídeos locais (arquivos grandes não versionados) ---
+public/videos/*.mp4
