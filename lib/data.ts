@@ -472,11 +472,11 @@ function slotClassificado(posicao: number): Time {
 export async function getChaveamento(): Promise<any> {
   const dados = await carregarDados();
   const classificacao = await getClassificacao();
-  const totalTimes = classificacao.length;
+  const gruposFinalizados = faseDeGruposFinalizada(dados);
   const totalTimesInscritos = dados.times.length;
 
-  // Preview: exibe bracket mesmo antes da fase de grupos terminar
-  const isPreview = totalTimes === 0 && totalTimesInscritos >= 4;
+  // Preview: exibe bracket com placeholders enquanto a fase de grupos não terminar
+  const isPreview = !gruposFinalizados && totalTimesInscritos >= 4;
   const slots = isPreview
     ? [slotClassificado(1), slotClassificado(2), slotClassificado(3), slotClassificado(4)]
     : classificacao;
