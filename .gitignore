@@ -32,4 +32,4 @@ data/
 public/img/times/
 
 # --- Vídeos locais (arquivos grandes não versionados) ---
-public/videos/*.mp4
+# public/videos/*.mp4  # descomente se quiser ignorar novamente
