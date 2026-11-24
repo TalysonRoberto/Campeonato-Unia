@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { carregarDados, getClassificacao, getChaveamento, faseDeGruposFinalizada } from '@/lib/data';
 import PlayoffBracket from './components/PlayoffBracket';
+import HeroVideo from './components/HeroVideo';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,14 +82,7 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="lg:w-1/2 flex items-center justify-center">
-              <Image
-                src="/img/logo.png"
-                alt="Campeonato Unia"
-                width={520}
-                height={520}
-                className="w-full max-w-md lg:max-w-lg h-auto object-contain drop-shadow-[0_0_60px_rgba(255,70,85,0.25)] animate-float"
-                priority
-              />
+              <HeroVideo />
             </div>
           </div>
         </div>
